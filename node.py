@@ -113,8 +113,12 @@ class PokeNode:
             except requests.exceptions.InvalidURL as e:
                 self.nodes.remove(node)
                 continue
+            except Exception as e:
+                print(f'Uncaught Error: {e}')
+                continue
 
             if response.status_code == 200:
+
                 length = response.json()['length']
                 chain = json.loads(response.json()['chain'].replace("'", '"'))
 
@@ -122,6 +126,9 @@ class PokeNode:
                 for b in chain:
                     blocks.append(Block(b["index"], b["timestamp"], b["previous_hash"], b["nonce"]))
 
+                print(f'Comparing our chain: {self.blockchain.last_block.index}-{self.blockchain.last_block.hash}\n'
+                      f'         to {blocks[-1].index}-{blocks[-1].hash}')
+                
                 # Check if the length is longer and the chain is valid
                 if length > max_length and validate_chain(blocks):
                     max_length = length
