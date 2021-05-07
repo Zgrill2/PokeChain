@@ -65,15 +65,12 @@ class PokeNode:
 
     def add_block(self, block):
         if not isinstance(block, Block):
-            #print(f'Converting dict to Block')
             block = self.create_block(block)
-        #print(f'Checking if block is valid')
         if self.blockchain.add_block(block):
 
             print(f'Block added')
             self.broadcast_new_block(block)
 
-            #print('beginning conflict resolution')
             self.resolve_conflicts() # broadcast our find to everyone
         else:
             print(f"New block {block} was invalid compared to {self.blockchain.last_block}")
