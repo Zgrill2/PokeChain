@@ -31,7 +31,7 @@ class PokeMiner:
         except Exception as e:
             print(f'Your node may be down. Success not guarenteed.')
             return False
-        sblock = f'{"block" : {response.json()["block"]}}'
+        sblock = '{"block" : ' + response.json()["block"] + '}'
         lblock = json.loads(sblock.replace("'", '"')) # am I dumb or is this .replace the stupidest thing ever
 
         if not isinstance(lblock, Block):
