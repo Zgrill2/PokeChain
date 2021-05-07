@@ -1,0 +1,135 @@
+import json
+import socket
+from urllib.parse import urlparse
+import os
+import requests
+
+from PokeChain import Pokechain, validate_chain
+from block import Block
+
+
+class PokeNode:
+    def __init__(self, app=None, blockchain_file='chain.json'):
+        self.app = app
+        self.blockfile = blockchain_file
+        if not os.path.exists(blockchain_file):
+            self.blockchain = Pokechain()
+        else:
+            with open(self.blockfile) as f:
+                data = f.read()
+                data = data.replace("'", '"')
+                data = json.loads(data)
+                self.blockchain = Pokechain(self.file_to_blocks(data))
+        self.nodes = set()
+
+    def init_app(self, app):
+        self.app = app
+
+    @property
+    def current_difficulty(self):
+        return self.blockchain.difficulty
+
+    def file_to_blocks(self, jchain={}):
+        blocks = []
+        for b in jchain['chain']:
+            blocks.append(self.create_block(b))
+        return blocks
+
+    def create_block(self, bdict):
+        try:
+            return Block(bdict["index"], bdict["timestamp"], bdict["previous_hash"], bdict["nonce"])
+        except Exception as e:
+            print(f'{e}')
+
+    def register_node(self, address):
+        """
+        Add a new node to the list of nodes
+        :param address: <str> Address of node. Eg. 'http://192.168.0.5:5000'
+        :return: None
+        """
+
+        parsed_url = urlparse(address)
+        self.nodes.add(parsed_url.netloc)
+        self.resolve_conflicts()
+        self.register_back(parsed_url)
+
+    def register_back(self, url):
+        hostname = socket.gethostname()
+        local_ip = socket.gethostbyname(hostname)
+        d = {'nodes': [f'http://{local_ip}:80']}
+        try:
+            headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
+            response = requests.post(f'{url}/nodes/register', json=d, headers=headers)
+        except:
+            pass
+
+    def add_block(self, block):
+        if not isinstance(block, Block):
+            #print(f'Converting dict to Block')
+            block = self.create_block(block)
+        #print(f'Checking if block is valid')
+        if self.blockchain.add_block(block):
+
+            print(f'Block added')
+            self.broadcast_new_block(block)
+
+            #print('beginning conflict resolution')
+            self.resolve_conflicts() # broadcast our find to everyone
+        else:
+            print(f"New block {block} was invalid compared to {self.blockchain.last_block}")
+            return False
+
+    def broadcast_new_block(self, block):
+        d = {'block': json.loads(str(block).replace("'", '"'))}
+        for node in self.nodes:
+            headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
+            response = requests.post(f'http://{node}/chain/add', json=d, headers=headers)
+            print(f'{response.json()["message"]}')
+
+    def resolve_conflicts(self):
+        """
+        This is our Consensus Algorithm, it resolves conflicts
+        by replacing our chain with the longest one in the network.
+        :return: <bool> True if our chain was replaced, False if not
+        """
+
+        neighbours = self.nodes
+        new_chain = None
+
+        # We're only looking for chains longer than ours
+        max_length = len(self.blockchain.chain)
+
+        # Grab and verify the chains from all the nodes in our network
+        for node in neighbours:
+            try:
+                response = requests.get(f'http://{node}/chain')
+            except requests.exceptions.ConnectionError as e:
+                print(f'{e}')
+                continue
+
+            if response.status_code == 200:
+                length = response.json()['length']
+                chain = json.loads(response.json()['chain'].replace("'", '"'))
+
+                blocks = []
+                for b in chain:
+                    blocks.append(Block(b["index"], b["timestamp"], b["previous_hash"], b["nonce"]))
+
+                # Check if the length is longer and the chain is valid
+                if length > max_length and validate_chain(blocks):
+                    max_length = length
+                    new_chain = chain
+
+        # Replace our chain if we discovered a new, valid chain longer than ours
+        if new_chain:
+            self.blockchain.update_chain(new_chain)
+            return True
+
+        return False
+
+
+if __name__ == '__main__':
+    pass
+
+
+
