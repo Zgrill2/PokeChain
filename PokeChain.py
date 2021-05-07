@@ -47,7 +47,7 @@ def is_valid_proof(block, block_hash):
 
 class Pokechain:
     # difficulty of our PoW algorithm
-    difficulty = 4
+    difficulty = 7
 
     def __init__(self, chain=[], blockfile_name='chain.json', genesis_phrase="Gotta Catch `em All"):
         self.unconfirmed_transactions = [] # currently unused
@@ -101,7 +101,8 @@ class Pokechain:
             return False
 
         self.chain.append(block)
-        self.write_chain()
+        if len(self.chain) % 100 == 0:
+            self.write_chain() # don't write everyblock its too often every 100 seems reasonable
         return True
 
 
