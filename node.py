@@ -9,7 +9,7 @@ from block import Block
 
 
 class PokeNode:
-    def __init__(self, app=None, blockchain_file='chain.json'):
+    def __init__(self, app=None, blockchain_file='chain.json', register_initial_node=''):
         self.app = app
         self.blockfile = blockchain_file
         if not os.path.exists(blockchain_file):
@@ -21,6 +21,8 @@ class PokeNode:
                 data = json.loads(data)
                 self.blockchain = Pokechain(self.file_to_blocks(data))
         self.nodes = set()
+        if not register_initial_node == '':
+            self.register_node(register_initial_node)
 
     def init_app(self, app):
         self.app = app
