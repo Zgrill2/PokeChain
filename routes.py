@@ -52,7 +52,7 @@ def add_block():
     values = request.json
     block = values.get('block')
 
-    result = pn.add_block(block)
+    result = pn.recieve_block(block, request.remote_addr)
     response = {
         'message': f'valid_block={result} sent from {request.remote_addr}',
         'new_block': block,

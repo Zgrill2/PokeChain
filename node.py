@@ -44,29 +44,31 @@ class PokeNode:
         except Exception as e:
             print(f'{e}')
 
-    def add_block(self, block):
+    def recieve_block(self, block, sender):
         if not isinstance(block, Block):
             block = self.create_block(block)
         if self.blockchain.add_block(block):
 
             print(f'Block added: {block.index} - {block.hash}')
-            self.broadcast_new_block(block)
+            for node in self.nodes:
+                if node == sender:
+                    continue
+                self.broadcast_new_block(block, node)
 
         else:
             print(f"New block {block} was invalid compared to {self.blockchain.last_block}")
             return False
         return True
 
-    def broadcast_new_block(self, block):
+    def broadcast_new_block(self, block, node):
         d = {'block': json.loads(str(block).replace("'", '"'))}
-        for node in self.nodes:
-            headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
-            try:
-                response = requests.post(f'http://{node}/chain/add', json=d, headers=headers)
-            except Exception as e:
-                # note failure, remove node after X failures
-                continue
-            print(f'{response.json()["message"]}')
+        headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
+        try:
+            response = requests.post(f'http://{node}/chain/add', json=d, headers=headers)
+        except Exception as e:
+            # note failure, remove node after X failures
+            return False
+        print(f'{response.json()["message"]}')
 
     def register_node(self, address):
         """
@@ -128,7 +130,7 @@ class PokeNode:
 
                 print(f'Comparing our chain: {self.blockchain.last_block.index}-{self.blockchain.last_block.hash}\n'
                       f'         to {blocks[-1].index}-{blocks[-1].hash}')
-                
+
                 # Check if the length is longer and the chain is valid
                 if length > max_length and validate_chain(blocks):
                     max_length = length
