@@ -31,7 +31,7 @@ class PokeMiner:
         except Exception as e:
             print(f'Your node may be down. Success not guarenteed.')
             return False
-        lblock = response.json()['block']
+        lblock = json.loads(response.json()['block'])
 
         if not isinstance(lblock, Block):
             lblock = self.node.create_block(lblock)
