@@ -57,6 +57,7 @@ class PokeNode:
 
         else:
             print(f"New block {block} was invalid compared to {self.blockchain.last_block}")
+            self.resolve_conflicts()
             return False
         return True
 
