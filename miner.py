@@ -62,6 +62,8 @@ class PokeMiner:
                 block.previous_hash = self.node.blockchain.last_block.hash
             block.nonce += 1
             computed_hash = block.hash
+            if block.nonce % 10000 == 0:
+                print(f'Attempted {block.nonce} tries to mine block {len(self.node.blockchain.chain)}')
 
 
 if __name__ == '__main__':

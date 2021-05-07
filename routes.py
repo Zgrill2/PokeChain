@@ -13,6 +13,7 @@ pn = PokeNode()
 
 @api_blueprint.route('/chain', methods=['GET'])
 def full_chain():
+    print(f'User requested full chain')
     response = {
         'chain': str(pn.blockchain.chain),
         'length': len(pn.blockchain.chain),
