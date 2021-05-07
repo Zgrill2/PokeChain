@@ -61,13 +61,10 @@ class PokeMiner:
         # TODO: implement dynamic difficulty
         while not computed_hash.startswith('0' * self.node.current_difficulty):
             # update our block if the chain has moved on
-            try:
-                if self.node.blockchain.last_block.index > block.index:
-                    block.index = self.node.blockchain.last_block
-                    block.timestamp = time.time()
-                    block.previous_hash = self.node.blockchain.last_block.hash
-            except Exception as e:
-                print(f'{self.node.blockchain.last_block.index}\n{block.index}')
+            if self.node.blockchain.last_block.index > block.index:
+                block.index = self.node.blockchain.last_block.index
+                block.timestamp = time.time()
+                block.previous_hash = self.node.blockchain.last_block.hash
             block.nonce += 1
             computed_hash = block.hash
             if block.nonce % 1000000 == 0:
