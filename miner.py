@@ -22,9 +22,37 @@ class PokeMiner:
                           previous_hash=last_block.hash)
 
         self.proof_of_work(new_block)
-        self.node.add_block(new_block)
+        self.emit_block(new_block)
+        #self.node.add_block(new_block)
 
         return new_block.index
+
+    def update_mining_chain(self):
+        try:
+            response = requests.get(f'{self.master_node}/chain')
+        except Exception as e:
+            print(f'{e}')
+            return False, 'Your server seems to be offline'
+        chain = response.json()
+        jchain = '{ "chain" : '+ chain['chain'] + "}"
+        jchain = json.loads(jchain.replace("'", '"'))
+        self.node.blockchain.update_chain(self.node.file_to_blocks(jchain))
+        return True, 'You are now at HEAD of server'
+
+    def emit_block(self, block):
+
+        #if self.blockchain.add_block(block):
+        print(f'Block added')
+        d = {'block': json.loads(str(block).replace("'", '"'))}
+        headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
+        try:
+            response = requests.post(f'{self.master_node}/chain/add', json=d, headers=headers)
+        except Exception as e:
+            return False, 'Your server seems to be offline'
+        re = response.json()
+        print(f'{response.json()["message"]}')
+        if re['validation'] == False:
+            self.update_mining_chain()
 
     def set_master_node(self, hostname):
         """
@@ -43,16 +71,8 @@ class PokeMiner:
         """
         self.master_node = hostname
         self.node.register_node(hostname)
-        try:
-            response = requests.get(f'{hostname}/chain')
-        except Exception as e:
-            print(f'{e}')
-            return False, 'Your server seems to be offline'
-        chain = response.json()
+        self.update_mining_chain()
 
-        jchain = '{ "chain" : '+ chain['chain'] + "}"
-        jchain = json.loads(jchain.replace("'", '"'))
-        self.node.blockchain.update_chain(self.node.file_to_blocks(jchain))
 
     def proof_of_work(self, block):
         block.nonce = 0
