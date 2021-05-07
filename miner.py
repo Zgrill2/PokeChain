@@ -1,12 +1,7 @@
 import json
 import time
-
 import requests
-from tornado.httpserver import HTTPServer
-from tornado.ioloop import IOLoop
-from tornado.wsgi import WSGIContainer
 
-from app import app_factory
 from block import Block
 from node import PokeNode
 
