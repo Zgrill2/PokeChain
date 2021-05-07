@@ -6,6 +6,25 @@ from block import Block
 from node import PokeNode
 
 
+
+keys = {
+    "up": "w",
+    "down": "s",
+    "left": "a",
+    "right": "d",
+    "a": "z",
+    "b": "x",
+    #    "l": "q",
+    #w    "r": "e",
+    "start": "g",
+    "select": "t"
+}
+
+k = [kk for kk in keys.keys()]
+
+moves_mining_for = ["up"]
+
+
 class PokeMiner:
     def __init__(self, master_node=''):
         self.node = PokeNode()
@@ -18,9 +37,14 @@ class PokeMiner:
                               timestamp=time.time(),
                               previous_hash=last_block.hash)
 
-            if not self.proof_of_work(new_block):
+            result = self.proof_of_work(new_block)
+            if not result:
                 continue
-            self.emit_block(new_block)
+
+            character = new_block.hash[-1]
+            result = ord(character) % len(k)
+            if k[result] in moves_mining_for:
+                self.emit_block(new_block)
 
 
     def get_last_block(self):
