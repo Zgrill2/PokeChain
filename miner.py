@@ -8,8 +8,9 @@ from node import PokeNode
 
 
 class PokeMiner:
-    def __init__(self):
+    def __init__(self, master_node=''):
         self.node = PokeNode()
+        self.master_node = master_node # to provide miners an actual network node to use
 
     def mine_block(self):
         last_block = self.node.blockchain.last_block
@@ -40,6 +41,7 @@ class PokeMiner:
             print(f'OOF: {e}')
             return False
         """
+        self.master_node = hostname
         self.node.register_node(hostname)
 
         response = requests.get(f'{hostname}/chain')
@@ -64,6 +66,11 @@ class PokeMiner:
             computed_hash = block.hash
             if block.nonce % 1000000 == 0:
                 print(f'Attempted {block.nonce} tries to mine block {len(self.node.blockchain.chain)}')
+            elif block.nonce % 999999 == 0:
+                response = requests.get(f'{self.master_node}/chain')
+                clength = response.json()['length']
+                if clength > len(self.node.blockchain.chain):
+                    self.node.resolve_conflicts()
 
 
 if __name__ == '__main__':

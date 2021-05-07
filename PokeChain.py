@@ -47,7 +47,7 @@ def is_valid_proof(block, block_hash):
 
 class Pokechain:
     # difficulty of our PoW algorithm
-    difficulty = 7
+    difficulty = 5
 
     def __init__(self, chain=[], blockfile_name='chain.json', genesis_phrase="Gotta Catch `em All"):
         self.unconfirmed_transactions = [] # currently unused

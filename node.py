@@ -9,7 +9,7 @@ from block import Block
 
 
 class PokeNode:
-    def __init__(self, app=None, blockchain_file='chain.json', register_initial_node=''):
+    def __init__(self, app=None, blockchain_file='chain.json', register_initial_node='http://192.168.1.109:80'):
         self.app = app
         self.blockfile = blockchain_file
         if not os.path.exists(blockchain_file):
@@ -43,6 +43,26 @@ class PokeNode:
         except Exception as e:
             print(f'{e}')
 
+    def add_block(self, block):
+        if not isinstance(block, Block):
+            block = self.create_block(block)
+        if self.blockchain.add_block(block):
+
+            print(f'Block added')
+            self.broadcast_new_block(block)
+
+            self.resolve_conflicts() # broadcast our find to everyone
+        else:
+            print(f"New block {block} was invalid compared to {self.blockchain.last_block}")
+            return False
+
+    def broadcast_new_block(self, block):
+        d = {'block': json.loads(str(block).replace("'", '"'))}
+        for node in self.nodes:
+            headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
+            response = requests.post(f'http://{node}/chain/add', json=d, headers=headers)
+            print(f'{response.json()["message"]}')
+
     def register_node(self, address):
         """
         Add a new node to the list of nodes
@@ -64,26 +84,6 @@ class PokeNode:
             response = requests.post(f'{url}/nodes/register', json=d, headers=headers)
         except:
             pass
-
-    def add_block(self, block):
-        if not isinstance(block, Block):
-            block = self.create_block(block)
-        if self.blockchain.add_block(block):
-
-            print(f'Block added')
-            self.broadcast_new_block(block)
-
-            self.resolve_conflicts() # broadcast our find to everyone
-        else:
-            print(f"New block {block} was invalid compared to {self.blockchain.last_block}")
-            return False
-
-    def broadcast_new_block(self, block):
-        d = {'block': json.loads(str(block).replace("'", '"'))}
-        for node in self.nodes:
-            headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
-            response = requests.post(f'http://{node}/chain/add', json=d, headers=headers)
-            print(f'{response.json()["message"]}')
 
     def resolve_conflicts(self):
         """
