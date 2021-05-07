@@ -13,19 +13,49 @@ class PokeMiner:
         self.master_node = master_node # to provide miners an actual network node to use
 
     def mine_block(self):
-        last_block = self.node.blockchain.last_block
-
-        if not isinstance(last_block, Block):
-            last_block = self.node.create_block(last_block)
+        last_block = self.get_last_block()
         new_block = Block(index=last_block.index + 1,
                           timestamp=time.time(),
                           previous_hash=last_block.hash)
 
-        self.proof_of_work(new_block)
+        if not self.proof_of_work(new_block):
+            return False
         self.emit_block(new_block)
         #self.node.add_block(new_block)
 
         return new_block.index
+
+    def get_last_block(self):
+        try:
+            response = requests.get(f'{self.master_node}/chain/last')
+        except Exception as e:
+            print(f'Your node may be down. Success not guarenteed.')
+            return False
+        lblock = response.json()['block']
+
+        if not isinstance(lblock, Block):
+            lblock = self.node.create_block(lblock)
+
+        if lblock.index > len(self.node.blockchain.chain):
+            self.update_mining_chain()
+
+        return lblock
+
+    def proof_of_work(self, block):
+        block.nonce = 0
+        computed_hash = block.hash
+        # TODO: implement dynamic difficulty
+        while not computed_hash.startswith('0' * self.node.current_difficulty):
+            # Leave if our last_block is outdated
+            b = self.get_last_block()
+            if b.index >= block.index:
+                return False
+            block.nonce += 1
+            computed_hash = block.hash
+            if block.nonce % 1000000 == 0:
+                print(f'Attempted {block.nonce} tries to mine block {len(self.node.blockchain.chain)}')
+            #elif block.nonce % 999999 == 0:
+
 
     def update_mining_chain(self):
         try:
@@ -74,30 +104,6 @@ class PokeMiner:
         self.update_mining_chain()
 
 
-    def proof_of_work(self, block):
-        block.nonce = 0
-
-        computed_hash = block.hash
-        # TODO: implement dynamic difficulty
-        while not computed_hash.startswith('0' * self.node.current_difficulty):
-            # update our block if the chain has moved on
-            if self.node.blockchain.last_block.index > block.index:
-                block.index = self.node.blockchain.last_block.index
-                block.timestamp = time.time()
-                block.previous_hash = self.node.blockchain.last_block.hash
-            block.nonce += 1
-            computed_hash = block.hash
-            if block.nonce % 1000000 == 0:
-                print(f'Attempted {block.nonce} tries to mine block {len(self.node.blockchain.chain)}')
-            #elif block.nonce % 999999 == 0:
-            try:
-                response = requests.get(f'{self.master_node}/chain')
-            except Exception as e:
-                print(f'Your node may be down. Success not guarenteed.')
-                continue
-            clength = response.json()['length']
-            if clength > len(self.node.blockchain.chain):
-                self.node.resolve_conflicts()
 
 
 if __name__ == '__main__':
