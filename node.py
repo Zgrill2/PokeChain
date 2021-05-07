@@ -9,9 +9,10 @@ from block import Block
 
 
 class PokeNode:
-    def __init__(self, app=None, blockchain_file='chain.json', register_initial_node='http://192.168.1.109:80'):
+    def __init__(self, app=None, blockchain_file='chain.json', register_initial_node='http://192.168.1.109:80', port=5000):
         self.app = app
         self.blockfile = blockchain_file
+        self.port = port
         if not os.path.exists(blockchain_file):
             self.blockchain = Pokechain()
         else:
@@ -83,7 +84,7 @@ class PokeNode:
     def register_back(self, url):
         hostname = socket.gethostname()
         local_ip = socket.gethostbyname(hostname)
-        d = {'nodes': [f'http://{local_ip}:80']}
+        d = {'nodes': [f'http://{local_ip}:{self.port}']}
         try:
             headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
             response = requests.post(f'{url}/nodes/register', json=d, headers=headers)
@@ -109,6 +110,9 @@ class PokeNode:
                 response = requests.get(f'http://{node}/chain')
             except requests.exceptions.ConnectionError as e:
                 print(f'{e}')
+                continue
+            except requests.exceptions.InvalidURL as e:
+                self.nodes.remove(node)
                 continue
 
             if response.status_code == 200:

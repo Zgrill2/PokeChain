@@ -2,7 +2,11 @@ import json
 import time
 
 import requests
+from tornado.httpserver import HTTPServer
+from tornado.ioloop import IOLoop
+from tornado.wsgi import WSGIContainer
 
+from app import app_factory
 from block import Block
 from node import PokeNode
 
@@ -12,27 +16,28 @@ class PokeMiner:
         self.node = PokeNode()
         self.master_node = master_node # to provide miners an actual network node to use
 
-    def mine_block(self):
-        last_block = self.get_last_block()
-        new_block = Block(index=last_block.index + 1,
-                          timestamp=time.time(),
-                          previous_hash=last_block.hash)
+    async def mine_block(self):
+        while True:
+            last_block = self.get_last_block()
+            new_block = Block(index=last_block.index + 1,
+                              timestamp=time.time(),
+                              previous_hash=last_block.hash)
 
-        if not self.proof_of_work(new_block):
-            return False
-        self.emit_block(new_block)
-        #self.node.add_block(new_block)
+            if not self.proof_of_work(new_block):
+                return False
+            self.emit_block(new_block)
+            #self.node.add_block(new_block)
 
-        return new_block.index
 
     def get_last_block(self):
+        """
         try:
             response = requests.get(f'{self.master_node}/chain/last')
         except Exception as e:
             print(f'Your node may be down. Success not guarenteed.')
             return False
         sblock = '{"block" : ' + response.json()["block"] + '}'
-        lblock = json.loads(sblock.replace("'", '"')) # am I dumb or is this .replace the stupidest thing ever
+        lblock = json.loads(sblock.replace("'", '"'))['block'] # am I dumb or is this .replace the stupidest thing ever
 
         if not isinstance(lblock, Block):
             lblock = self.node.create_block(lblock)
@@ -40,7 +45,8 @@ class PokeMiner:
         if lblock.index > len(self.node.blockchain.chain):
             self.update_mining_chain()
 
-        return lblock
+        return lblock"""
+        return self.node.blockchain.last_block
 
     def proof_of_work(self, block):
         block.nonce = 0
@@ -105,10 +111,15 @@ class PokeMiner:
         self.update_mining_chain()
 
 
+LISTEN_PORT = 5000
 
+import math
 
 if __name__ == '__main__':
     m = PokeMiner()
     m.set_master_node('http://192.168.1.153:80')
-    while True:
-        m.mine_block()
+    m.mine_block()
+    flask_app = app_factory()
+    http_server = HTTPServer(WSGIContainer(flask_app), max_body_size=math.inf, max_buffer_size=math.inf)
+    http_server.listen(LISTEN_PORT)
+    IOLoop.instance().start()
