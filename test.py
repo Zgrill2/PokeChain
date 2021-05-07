@@ -37,7 +37,7 @@ def create_block(bdict):
 
 def get_current_chain():
     try:
-        response = requests.get(f'http://192.168.1.109:80/chain')
+        response = requests.get(f'http://192.168.1.153:80/chain')
     except requests.exceptions.ConnectionError as e:
         print(f'{e}')
         return False
