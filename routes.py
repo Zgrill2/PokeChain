@@ -46,7 +46,7 @@ def add_block():
 
     result = pn.add_block(block)
     response = {
-        'message': f'valid_block={result}',
+        'message': f'valid_block={result} sent from {request.remote_addr}',
         'new_block': block,
     }
     return jsonify(response), 201

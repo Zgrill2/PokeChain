@@ -61,16 +61,23 @@ class PokeMiner:
         # TODO: implement dynamic difficulty
         while not computed_hash.startswith('0' * self.node.current_difficulty):
             # update our block if the chain has moved on
-            if self.node.blockchain.last_block.index > block.index:
-                block.index = self.node.blockchain.last_block
-                block.timestamp = time.time()
-                block.previous_hash = self.node.blockchain.last_block.hash
+            try:
+                if self.node.blockchain.last_block.index > block.index:
+                    block.index = self.node.blockchain.last_block
+                    block.timestamp = time.time()
+                    block.previous_hash = self.node.blockchain.last_block.hash
+            except Exception as e:
+                print(f'{self.node.blockchain.last_block.index}\n{block.index}')
             block.nonce += 1
             computed_hash = block.hash
             if block.nonce % 1000000 == 0:
                 print(f'Attempted {block.nonce} tries to mine block {len(self.node.blockchain.chain)}')
             elif block.nonce % 999999 == 0:
-                response = requests.get(f'{self.master_node}/chain')
+                try:
+                    response = requests.get(f'{self.master_node}/chain')
+                except Exception as e:
+                    print(f'Your node may be down. Success not guarenteed.')
+                    continue
                 clength = response.json()['length']
                 if clength > len(self.node.blockchain.chain):
                     self.node.resolve_conflicts()
@@ -78,6 +85,6 @@ class PokeMiner:
 
 if __name__ == '__main__':
     m = PokeMiner()
-    m.set_master_node('http://192.168.1.109:80')
+    m.set_master_node('http://192.168.1.153:80')
     while True:
         m.mine_block()

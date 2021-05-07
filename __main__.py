@@ -39,6 +39,16 @@ Fix the no initial json mining bug (might be fixed)
             AttributeError: 'dict' object has no attribute 'index'
             
             
+Attempted 1000000 tries to mine block 29
+Traceback (most recent call last):
+  File "miner.py", line 83, in <module>
+    m.mine_block()
+  File "miner.py", line 24, in mine_block
+    self.proof_of_work(new_block)
+  File "miner.py", line 64, in proof_of_work
+    if self.node.blockchain.last_block.index > block.index:
+TypeError: '>' not supported between instances of 'int' and 'Block'            
+            
 Dicts occasionally getting put onto PokeChain.chain instead of Block objects (bandaided)
 
 

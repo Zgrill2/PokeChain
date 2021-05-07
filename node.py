@@ -55,6 +55,7 @@ class PokeNode:
         else:
             print(f"New block {block} was invalid compared to {self.blockchain.last_block}")
             return False
+        return True
 
     def broadcast_new_block(self, block):
         d = {'block': json.loads(str(block).replace("'", '"'))}
