@@ -51,7 +51,7 @@ class PokeNode:
 
             print(f'Block added: {block.index} - {block.hash}')
             for node in self.nodes:
-                if node == sender:
+                if urlparse(node) == urlparse(sender):
                     continue
                 self.broadcast_new_block(block, node)
 
