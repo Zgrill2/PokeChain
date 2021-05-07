@@ -21,7 +21,7 @@ def full_chain():
     return jsonify(response), 200
 
 @api_blueprint.route('/chain/last', methods=['GET'])
-def full_chain():
+def last_block():
     print(f'User requested last block on the chain')
     response = {
         'block': str(pn.blockchain.last_block),
