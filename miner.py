@@ -43,8 +43,11 @@ class PokeMiner:
         """
         self.master_node = hostname
         self.node.register_node(hostname)
-
-        response = requests.get(f'{hostname}/chain')
+        try:
+            response = requests.get(f'{hostname}/chain')
+        except Exception as e:
+            print(f'{e}')
+            return False, 'Your server seems to be offline'
         chain = response.json()
 
         jchain = '{ "chain" : '+ chain['chain'] + "}"
