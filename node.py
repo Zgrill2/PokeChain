@@ -49,10 +49,9 @@ class PokeNode:
             block = self.create_block(block)
         if self.blockchain.add_block(block):
 
-            print(f'Block added')
+            print(f'Block added: {block.index} - {block.hash}')
             self.broadcast_new_block(block)
 
-            #self.resolve_conflicts() # broadcast our find to everyone
         else:
             print(f"New block {block} was invalid compared to {self.blockchain.last_block}")
             return False

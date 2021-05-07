@@ -16,7 +16,7 @@ class PokeMiner:
         self.node = PokeNode()
         self.master_node = master_node # to provide miners an actual network node to use
 
-    async def mine_block(self):
+    def mine_block(self):
         while True:
             last_block = self.get_last_block()
             new_block = Block(index=last_block.index + 1,
@@ -24,9 +24,8 @@ class PokeMiner:
                               previous_hash=last_block.hash)
 
             if not self.proof_of_work(new_block):
-                return False
+                continue
             self.emit_block(new_block)
-            #self.node.add_block(new_block)
 
 
     def get_last_block(self):
@@ -61,7 +60,7 @@ class PokeMiner:
             computed_hash = block.hash
             if block.nonce % 1000000 == 0:
                 print(f'Attempted {block.nonce} tries to mine block {len(self.node.blockchain.chain)}')
-            #elif block.nonce % 999999 == 0:
+        return True
 
 
     def update_mining_chain(self):
@@ -78,48 +77,22 @@ class PokeMiner:
 
     def emit_block(self, block):
 
-        #if self.blockchain.add_block(block):
-        print(f'Block added')
         d = {'block': json.loads(str(block).replace("'", '"'))}
         headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
         try:
             response = requests.post(f'{self.master_node}/chain/add', json=d, headers=headers)
         except Exception as e:
             return False, 'Your server seems to be offline'
-        re = response.json()
         print(f'{response.json()["message"]}')
-        if re['validation'] == False:
-            self.update_mining_chain()
+        self.update_mining_chain()
 
     def set_master_node(self, hostname):
-        """
-        try:
-            response = requests.get(f'{hostname}/chain')
-            chain = json.loads(response.json()['chain'].replace("'", '"'))
-
-            blocks = []
-            for b in chain:
-                blocks.append(Block(b["index"], b["timestamp"], b["previous_hash"], b["nonce"]))
-            self.nodeblockchain.update_chain(blocks)
-            print(f'Loaded chain from master node: {len(self.nodeblockchain.chain)} blocks')
-        except requests.exceptions.ConnectionError as e:
-            print(f'OOF: {e}')
-            return False
-        """
         self.master_node = hostname
         self.node.register_node(hostname)
         self.update_mining_chain()
 
 
-LISTEN_PORT = 5000
-
-import math
-
 if __name__ == '__main__':
     m = PokeMiner()
     m.set_master_node('http://192.168.1.153:80')
     m.mine_block()
-    flask_app = app_factory()
-    http_server = HTTPServer(WSGIContainer(flask_app), max_body_size=math.inf, max_buffer_size=math.inf)
-    http_server.listen(LISTEN_PORT)
-    IOLoop.instance().start()
