@@ -51,7 +51,7 @@ class PokeNode:
             print(f'Block added')
             self.broadcast_new_block(block)
 
-            self.resolve_conflicts() # broadcast our find to everyone
+            #self.resolve_conflicts() # broadcast our find to everyone
         else:
             print(f"New block {block} was invalid compared to {self.blockchain.last_block}")
             return False
@@ -60,7 +60,11 @@ class PokeNode:
         d = {'block': json.loads(str(block).replace("'", '"'))}
         for node in self.nodes:
             headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
-            response = requests.post(f'http://{node}/chain/add', json=d, headers=headers)
+            try:
+                response = requests.post(f'http://{node}/chain/add', json=d, headers=headers)
+            except Exception as e:
+                # note failure, remove node after X failures
+                continue
             print(f'{response.json()["message"]}')
 
     def register_node(self, address):
