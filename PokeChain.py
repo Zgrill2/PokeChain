@@ -30,6 +30,9 @@ def validate_chain(chain):
         if not is_valid_proof(block, block.hash):
             return False
 
+        if not current_index == block.index:
+            return False
+
         last_block = block
         current_index += 1
 
