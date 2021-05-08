@@ -18,10 +18,10 @@ class Pokechain:
         self.unconfirmed_transactions = [] # currently unused
         self.chain = chain
         self.blockfile = blockfile_name
+        self.difficulty = 5
         self.genesis_phrase = genesis_phrase
         if len(self.chain) == 0:
             self.create_genesis_block()
-        self.difficulty = 5
 
     def update_difficulty(self):
         # get past 50 blocks
