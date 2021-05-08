@@ -59,7 +59,7 @@ def play():
             character = create_block(chain[current_block]).hash[-1]
             result = ord(character) % len(k)
 
-            print(f'{keys[k[result]]} pressed')
+            print(f'{[result]} pressed')
             press_key(keys[k[result]], 1)
             current_block += 1
             time.sleep(0.25)
