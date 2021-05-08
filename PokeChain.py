@@ -28,7 +28,12 @@ class Pokechain:
         # if there isn't 50 blocks, leave
         # calc average time
         # if average < desired, +1 diff, if average > desired -1 diff
-        past_50 = self.chain[-50:]
+        print('updating difficulty')
+        
+        if len(self.chain) < 50:
+            past_50 = self.chain[:]
+        else:
+            past_50 = self.chain[-50:]
         timestamps = []
         for b in range(len(past_50)):
             timestamps.append(past_50[b].timestamp - past_50[b-1].timestamp)
@@ -37,6 +42,7 @@ class Pokechain:
             self.difficulty += 1
         if avg > Pokechain.DESIRED_SECONDS_PER_BLOCK:
             self.difficulty -= 1
+        print(f'difficulty set to {self.difficulty}. Based on {sum(timestamps) / len(timestamps)}')
 
     def is_valid_proof(self, block, block_hash):
         """
