@@ -36,7 +36,7 @@ class PokeMiner:
             new_block = Block(index=last_block.index + 1,
                               timestamp=time.time(),
                               previous_hash=last_block.hash,
-                              difficulty=self.node.current_difficulty)
+                              difficulty=self.node.blockchain.difficulty)
 
             result = self.proof_of_work(new_block)
             if not result:
@@ -71,7 +71,7 @@ class PokeMiner:
         block.nonce = 0
         computed_hash = block.hash
         # TODO: implement dynamic difficulty
-        while not computed_hash.startswith('0' * self.node.current_difficulty):
+        while not computed_hash.startswith('0' * self.node.blockchain.difficulty):
             # Leave if our last_block is outdated
             b = self.get_last_block()
             if b.index >= block.index:

@@ -94,7 +94,7 @@ class Pokechain:
     def last_block(self):
         rchain = self.chain[-1]
         if isinstance(rchain, dict):
-            return Block(rchain["index"], rchain["timestamp"], rchain["previous_hash"], rchain["nonce"], self.difficulty)
+            return Block(rchain["index"], rchain["timestamp"], rchain["previous_hash"], self.difficulty, rchain["nonce"])
         return self.chain[-1]
 
     def update_chain(self, new_chain):
