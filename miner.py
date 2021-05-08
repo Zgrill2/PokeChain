@@ -22,7 +22,7 @@ keys = {
 
 k = [kk for kk in keys.keys()]
 
-moves_mining_for = ["down", "right"]
+moves_mining_for = ["a"]
 
 
 class PokeMiner:
@@ -35,7 +35,8 @@ class PokeMiner:
             last_block = self.get_last_block()
             new_block = Block(index=last_block.index + 1,
                               timestamp=time.time(),
-                              previous_hash=last_block.hash)
+                              previous_hash=last_block.hash,
+                              difficulty=self.node.current_difficulty)
 
             result = self.proof_of_work(new_block)
             if not result:

@@ -4,7 +4,7 @@ from urllib.parse import urlparse
 import os
 import requests
 
-from PokeChain import Pokechain, validate_chain
+from PokeChain import Pokechain
 from block import Block
 
 
@@ -133,7 +133,7 @@ class PokeNode:
                       f'         to {blocks[-1].index}-{blocks[-1].hash}')
 
                 # Check if the length is longer and the chain is valid
-                if length > max_length and validate_chain(blocks):
+                if length > max_length and self.blockchain.validate_chain(blocks):
                     max_length = length
                     new_chain = chain
 
