@@ -22,7 +22,7 @@ keys = {
 
 k = [kk for kk in keys.keys()]
 
-moves_mining_for = ["a"]
+moves_mining_for = ["a", "b", "left", "right", "up", "down"]
 
 
 class PokeMiner:
