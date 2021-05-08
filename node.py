@@ -40,7 +40,7 @@ class PokeNode:
 
     def create_block(self, bdict):
         try:
-            return Block(bdict["index"], bdict["timestamp"], bdict["previous_hash"], bdict["nonce"])
+            return Block(bdict["index"], bdict["timestamp"], bdict["previous_hash"], bdict["nonce"], bdict["difficulty"])
         except Exception as e:
             print(f'{e}')
 
@@ -127,7 +127,7 @@ class PokeNode:
 
                 blocks = []
                 for b in chain:
-                    blocks.append(Block(b["index"], b["timestamp"], b["previous_hash"], b["nonce"]))
+                    blocks.append(Block(b["index"], b["timestamp"], b["previous_hash"], b["nonce"], b["difficulty"]))
 
                 print(f'Comparing our chain: {self.blockchain.last_block.index}-{self.blockchain.last_block.hash}\n'
                       f'         to {blocks[-1].index}-{blocks[-1].hash}')

@@ -32,7 +32,7 @@ from block import Block
 
 
 def create_block(bdict):
-    return Block(bdict["index"], bdict["timestamp"], bdict["previous_hash"], bdict["nonce"])
+    return Block(bdict["index"], bdict["timestamp"], bdict["previous_hash"], bdict["nonce"], bdict["difficulty"])
 
 
 def get_current_chain():

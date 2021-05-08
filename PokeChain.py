@@ -29,7 +29,7 @@ class Pokechain:
         # calc average time
         # if average < desired, +1 diff, if average > desired -1 diff
         print('updating difficulty')
-        
+
         if len(self.chain) < 50:
             past_50 = self.chain[:]
         else:
