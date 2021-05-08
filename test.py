@@ -1,5 +1,5 @@
 import json
-
+import time
 import pyautogui
 import requests
 import string
@@ -37,7 +37,7 @@ def create_block(bdict):
 
 def get_current_chain():
     try:
-        response = requests.get(f'http://192.168.1.153:80/chain')
+        response = requests.get(f'http://192.168.1.117:5000/chain')
     except requests.exceptions.ConnectionError as e:
         print(f'{e}')
         return False
@@ -51,6 +51,7 @@ def play():
 
     while True:
         chain = get_current_chain()
+        #current_block = 0
         len_chain = len(chain)
 
         while len_chain > current_block:
@@ -58,8 +59,10 @@ def play():
             character = create_block(chain[current_block]).hash[-1]
             result = ord(character) % len(k)
 
+            print(f'{keys[k[result]]} pressed')
             press_key(keys[k[result]], 1)
             current_block += 1
+            time.sleep(0.25)
 
 
 if __name__ == '__main__':

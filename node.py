@@ -9,7 +9,7 @@ from block import Block
 
 
 class PokeNode:
-    def __init__(self, app=None, blockchain_file='chain.json', register_initial_node='http://192.168.1.109:80', port=5000):
+    def __init__(self, app=None, blockchain_file='chain.json', register_initial_node='http://192.168.1.117:5000', port=5000):
         self.app = app
         self.blockfile = blockchain_file
         self.port = port

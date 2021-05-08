@@ -22,7 +22,7 @@ keys = {
 
 k = [kk for kk in keys.keys()]
 
-moves_mining_for = ["up", "right", "a"]
+moves_mining_for = ["down", "right"]
 
 
 class PokeMiner:
@@ -113,5 +113,5 @@ class PokeMiner:
 
 if __name__ == '__main__':
     m = PokeMiner()
-    m.set_master_node('http://192.168.1.153:80')
+    m.set_master_node('http://192.168.1.117:5000')
     m.mine_block()
