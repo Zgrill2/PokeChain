@@ -10,7 +10,7 @@ from block import Block
 
 
 class PokeNode:
-    def __init__(self, app=None, blockchain_file='chain.json', register_initial_node='192.168.1.109:80', port=80):
+    def __init__(self, app=None, blockchain_file='chain.json', register_initial_node='', port=80):
         self.app = app
         self.blockfile = blockchain_file
         self.port = port
@@ -62,10 +62,12 @@ class PokeNode:
         if self.blockchain.add_block(block):
 
             print(f'Block added: {block.index} - {block.hash}')
-            for node in self.nodes:
-                if urlparse(node) == urlparse(sender):
-                    continue
-                self.broadcast_new_block(block, node)
+
+
+            import concurrent.futures
+            import urllib.request
+            with  concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+                future_to_url = {executor.submit(self.broadcast_new_block, block, node): node for node in self.nodes}
 
         else:
             print(f"New block {block.hash} was invalid: {block}")
@@ -103,6 +105,7 @@ class PokeNode:
         except:
             pass
 
+
     def broadcast_new_block(self, block, node):
         d = {'block': json.loads(str(block).replace("'", '"'))}
         headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
@@ -111,6 +114,7 @@ class PokeNode:
         except Exception as e:
             # note network failure, remove node after X timeouts
             return True
+        return True
 
     def resolve_conflicts(self):
         """
