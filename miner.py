@@ -85,7 +85,7 @@ class PokeMiner:
 
     def update_mining_chain(self):
         try:
-            response = requests.get(f'{self.master_node}/chain')
+            response = requests.get(f'{self.master_node}/chain', timeout=5)
         except Exception as e:
             print(f'{e}')
             return False, 'Your server seems to be offline'
@@ -100,7 +100,7 @@ class PokeMiner:
         d = {'block': json.loads(str(block).replace("'", '"'))}
         headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
         try:
-            response = requests.post(f'{self.master_node}/chain/add', json=d, headers=headers)
+            response = requests.post(f'{self.master_node}/chain/add', json=d, headers=headers, timeout=5)
         except Exception as e:
             return False, 'Your server seems to be offline'
         print(f'{response.json()["message"]}')
@@ -114,5 +114,5 @@ class PokeMiner:
 
 if __name__ == '__main__':
     m = PokeMiner()
-    m.set_master_node('http://192.168.1.117:5000')
+    m.set_master_node('http://192.168.1.153:80')
     m.mine_block()

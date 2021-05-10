@@ -18,10 +18,23 @@ class Pokechain:
         self.unconfirmed_transactions = [] # currently unused
         self.chain = chain
         self.blockfile = blockfile_name
-        self.difficulty = 5
+        self.difficulty = 2
         self.genesis_phrase = genesis_phrase
         if len(self.chain) == 0:
             self.create_genesis_block()
+
+    def re_calculate_difficulty(self):
+        # Start with initial difficulty
+        # playback each difficulty update
+        print('re-calculating difficulty')
+        difficulty = self.chain[0].difficulty
+        for i in range(0, len(self.chain), 50):
+            chain = self.chain[0:i]
+            difficulty = self.calculate_difficulty(chain, i, difficulty)
+        diff = len(self.chain) % 50
+        index = len(self.chain) - diff
+        self.difficulty = self.calculate_difficulty(self.chain, index, self.difficulty)
+
 
     def update_difficulty(self):
         # get past 50 blocks
@@ -30,19 +43,36 @@ class Pokechain:
         # if average < desired, +1 diff, if average > desired -1 diff
         print('updating difficulty')
 
-        if len(self.chain) < 50:
-            past_50 = self.chain[:]
-        else:
-            past_50 = self.chain[-50:]
+        diff = len(self.chain) % 50
+        index = len(self.chain) - diff
+        self.difficulty = self.calculate_difficulty(self.chain, index, self.difficulty)
+
+    def calculate_difficulty(self, chain, index, difficulty):
+        # index should be 50, 100, 150, etc
+        # chain should be the chain being calculated on
+        if index < 50:
+            return chain[0].difficulty
+        past_50 = chain[index-50:index]
         timestamps = []
-        for b in range(len(past_50)):
-            timestamps.append(past_50[b].timestamp - past_50[b-1].timestamp)
+        for b in range(len(past_50)-1):
+            timestamps.append(past_50[b+1].timestamp - past_50[b].timestamp)
         avg = sum(timestamps) / len(timestamps)
         if avg < Pokechain.DESIRED_SECONDS_PER_BLOCK:
-            self.difficulty += 1
+            difficulty += 1
         if avg > Pokechain.DESIRED_SECONDS_PER_BLOCK:
-            self.difficulty -= 1
-        print(f'difficulty set to {self.difficulty}. Based on {sum(timestamps) / len(timestamps)}')
+            if difficulty > 0:
+                difficulty -= 1
+        print(f'difficulty set to {difficulty}. Based on {sum(timestamps) / len(timestamps)}')
+        return difficulty
+
+    def is_valid_difficulty(self, block):
+        # validates the difficulty in a proposed new block
+        chain = self.chain
+        index = block.index - (block.index % 50)
+        cdifficulty = self.calculate_difficulty(chain, index-1, chain[block.index-1].difficulty)
+        t = block.hash[:cdifficulty]
+        b = '0' * cdifficulty
+        return t == b
 
     def is_valid_proof(self, block, block_hash):
         """
@@ -72,6 +102,9 @@ class Pokechain:
             if not self.is_valid_proof(block, block.hash):
                 return False
 
+            if not self.is_valid_difficulty(chain[current_index]):
+                return False
+
             if not current_index == block.index:
                 return False
 
@@ -94,11 +127,12 @@ class Pokechain:
     def last_block(self):
         rchain = self.chain[-1]
         if isinstance(rchain, dict):
-            return Block(rchain["index"], rchain["timestamp"], rchain["previous_hash"], self.difficulty, rchain["nonce"])
+            return Block(rchain["index"], rchain["timestamp"], rchain["previous_hash"], rchain["difficulty"], rchain["nonce"])
         return self.chain[-1]
 
     def update_chain(self, new_chain):
         self.chain = new_chain
+        self.re_calculate_difficulty()
         self.write_chain()
 
     def write_chain(self):
@@ -121,6 +155,9 @@ class Pokechain:
             return False
 
         if not self.is_valid_proof(block, block.hash):
+            return False
+
+        if not self.is_valid_difficulty(block):
             return False
 
         self.chain.append(block)

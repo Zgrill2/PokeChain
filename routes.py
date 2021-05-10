@@ -20,6 +20,7 @@ def full_chain():
     }
     return jsonify(response), 200
 
+
 @api_blueprint.route('/chain/last', methods=['GET'])
 def last_block():
     print(f'User requested last block on the chain')
@@ -28,6 +29,7 @@ def last_block():
         'hash': pn.blockchain.last_block.hash,
     }
     return jsonify(response), 200
+
 
 @api_blueprint.route('/nodes/register', methods=['POST'])
 def register_nodes():

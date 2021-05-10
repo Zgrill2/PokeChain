@@ -9,7 +9,7 @@ from block import Block
 
 
 class PokeNode:
-    def __init__(self, app=None, blockchain_file='chain.json', register_initial_node='http://192.168.1.117:5000', port=5000):
+    def __init__(self, app=None, blockchain_file='chain.json', register_initial_node='', port=80):
         self.app = app
         self.blockfile = blockchain_file
         self.port = port
@@ -47,6 +47,8 @@ class PokeNode:
     def recieve_block(self, block, sender):
         if not isinstance(block, Block):
             block = self.create_block(block)
+        if block.index > len(self.blockchain.chain):
+            self.resolve_conflicts()
         if self.blockchain.add_block(block):
 
             print(f'Block added: {block.index} - {block.hash}')
@@ -56,7 +58,7 @@ class PokeNode:
                 self.broadcast_new_block(block, node)
 
         else:
-            print(f"New block {block} was invalid compared to {self.blockchain.last_block}")
+            print(f"New block {block.hash} was invalid: {block}")
             self.resolve_conflicts()
             return False
         return True
@@ -65,7 +67,7 @@ class PokeNode:
         d = {'block': json.loads(str(block).replace("'", '"'))}
         headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
         try:
-            response = requests.post(f'http://{node}/chain/add', json=d, headers=headers)
+            response = requests.post(f'http://{node}/chain/add', json=d, headers=headers, timeout=5)
         except Exception as e:
             # note failure, remove node after X failures
             return False
@@ -89,7 +91,7 @@ class PokeNode:
         d = {'nodes': [f'http://{local_ip}:{self.port}']}
         try:
             headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
-            response = requests.post(f'{url}/nodes/register', json=d, headers=headers)
+            response = requests.post(f'{url}/nodes/register', json=d, headers=headers, timeout=5)
         except:
             pass
 
@@ -109,7 +111,7 @@ class PokeNode:
         # Grab and verify the chains from all the nodes in our network
         for node in neighbours:
             try:
-                response = requests.get(f'http://{node}/chain')
+                response = requests.get(f'http://{node}/chain', timeout=5)
             except requests.exceptions.ConnectionError as e:
                 print(f'{e}')
                 continue
@@ -135,7 +137,7 @@ class PokeNode:
                 # Check if the length is longer and the chain is valid
                 if length > max_length and self.blockchain.validate_chain(blocks):
                     max_length = length
-                    new_chain = chain
+                    new_chain = blocks
 
         # Replace our chain if we discovered a new, valid chain longer than ours
         if new_chain:
@@ -144,6 +146,11 @@ class PokeNode:
 
         return False
 
+
+
+class MinerNode(PokeNode):
+    def __init__(self):
+        super().__init__()
 
 if __name__ == '__main__':
     pass
