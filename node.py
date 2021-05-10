@@ -48,8 +48,11 @@ class PokeNode:
     def recieve_block(self, block, sender):
         if not isinstance(block, Block):
             block = self.create_block(block)
+
+        # If block is > our current chain +1 (for expected next block), resolve and peace out
         if block.index > len(self.blockchain.chain):
             self.resolve_conflicts()
+            return True
         if self.blockchain.add_block(block):
 
             print(f'Block added: {block.index} - {block.hash}')
