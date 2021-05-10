@@ -11,6 +11,13 @@ class Block:
         self.name = name
         self.difficulty = difficulty
 
+    def is_valid_proof(self, block_hash):
+        """
+        Potentially vestigial function
+        """
+        return (block_hash.startswith('0' * self.difficulty) and
+                block_hash == self.hash)
+
     @property
     def hash(self):
         """

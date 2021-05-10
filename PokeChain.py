@@ -5,114 +5,22 @@ from block import Block
 from hashlib import sha256
 import json
 import time
-
+import difficulty
 from flask import Flask, request
 import requests
 
 
 class Pokechain:
-    # difficulty of our PoW algorithm
-    DESIRED_SECONDS_PER_BLOCK = .51
 
     def __init__(self, chain=[], blockfile_name='chain.json', genesis_phrase="Gotta Catch `em All"):
         self.unconfirmed_transactions = [] # currently unused
         self.chain = chain
         self.blockfile = blockfile_name
-        self.difficulty = 2
+        self.genesis_difficulty = 2
         self.genesis_phrase = genesis_phrase
+        self.current_difficulty = self.genesis_difficulty
         if len(self.chain) == 0:
             self.create_genesis_block()
-
-    def re_calculate_difficulty(self):
-        # Start with initial difficulty
-        # playback each difficulty update
-        print('re-calculating difficulty')
-        difficulty = self.chain[0].difficulty
-        for i in range(0, len(self.chain), 50):
-            chain = self.chain[0:i]
-            if len(chain) == 0:
-                chain.append(self.chain[0])
-            difficulty = self.calculate_difficulty(chain, i, difficulty)
-        self.difficulty = difficulty
-
-    def update_difficulty(self):
-        # get past 50 blocks
-        # if there isn't 50 blocks, leave
-        # calc average time
-        # if average < desired, +1 diff, if average > desired -1 diff
-        print('updating difficulty')
-
-        diff = len(self.chain) % 50
-        index = len(self.chain) - diff
-        self.difficulty = self.calculate_difficulty(self.chain, index, self.difficulty)
-
-    def calculate_difficulty(self, chain, index, difficulty):
-        # index should be 50, 100, 150, etc
-        # chain should be the chain being calculated on
-        if index < 50:
-            return chain[0].difficulty
-        past_50 = chain[index-50:index]
-        timestamps = []
-        for b in range(len(past_50)-1):
-            timestamps.append(past_50[b+1].timestamp - past_50[b].timestamp)
-        avg = sum(timestamps) / len(timestamps)
-        if avg < Pokechain.DESIRED_SECONDS_PER_BLOCK:
-            difficulty += 1
-        if avg > Pokechain.DESIRED_SECONDS_PER_BLOCK:
-            if difficulty > 0:
-                difficulty -= 1
-        print(f'difficulty set to {difficulty}. Based on {sum(timestamps) / len(timestamps)}')
-        return difficulty
-
-    def is_valid_difficulty(self, block):
-        # validates the difficulty in a proposed new block
-        chain = self.chain
-        index = block.index - (block.index+1 % 50)
-        b = block.index
-        cdifficulty = self.calculate_difficulty(chain, index, chain[index].difficulty)
-        print(f'Calculated a difficulty requirement of {cdifficulty}')
-        t = block.hash[:cdifficulty]
-        b = '0' * cdifficulty
-        return t == b
-
-    def is_valid_proof(self, block, block_hash):
-        """
-        Difficulty is currently static.
-        When dynamic diff is implemented, diff @ block X will need to be calculated and will be part of verification
-        """
-        return (block_hash.startswith('0' * block.difficulty) and
-                block_hash == block.hash)
-
-    def validate_chain(self, chain):
-        """
-        Determine if a given blockchain is valid
-        :param chain: <list> A blockchain
-        :return: <bool> True if valid, False if not
-        """
-        last_block = chain[0]
-        current_index = 1
-
-        while current_index < len(chain):
-            block = chain[current_index]
-
-            # Check that the hash of the block is correct
-            if block.previous_hash != last_block.hash:
-                return False
-
-            # Check that the Proof of Work is correct
-            if not self.is_valid_proof(block, block.hash):
-                return False
-
-            if not self.is_valid_difficulty(chain[current_index]):
-                return False
-
-            if not current_index == block.index:
-                return False
-
-            last_block = block
-            current_index += 1
-
-        return True
 
     def create_genesis_block(self):
         """
@@ -120,7 +28,7 @@ class Pokechain:
         the chain. The block has index 0, previous_hash as 0, and
         a valid hash.
         """
-        genesis_block = Block(0, time.time(), self.genesis_phrase, self.difficulty)
+        genesis_block = Block(0, time.time(), self.genesis_phrase, self.genesis_difficulty)
         self.chain.append(genesis_block)
         self.write_chain()
 
@@ -133,7 +41,7 @@ class Pokechain:
 
     def update_chain(self, new_chain):
         self.chain = new_chain
-        self.re_calculate_difficulty()
+        self.current_difficulty = difficulty.calc_chain_head_difficulty(new_chain)
         self.write_chain()
 
     def write_chain(self):
@@ -145,37 +53,26 @@ class Pokechain:
     def add_block(self, block):
         """
         A function that adds the block to the chain after verification.
-        Verification includes:
-        * Checking if the proof is valid.
-        * The previous_hash referred in the block and the hash of latest block
-          in the chain match.
+        * Check if difficulty is valid
+        * Verify block is valid chain from current HEAD.
         """
-        previous_hash = self.last_block.hash
-
-        if previous_hash != block.previous_hash:
-            print('Previous hash compared failed. New block denied.')
-            print(f'    {previous_hash} does not match our chain\'s previous hash of {self.last_block.hash}')
+        # Check that the stated difficulty is accurate
+        if not difficulty.is_valid_difficulty(block, self.chain):
             return False
 
-        if not self.is_valid_proof(block, block.hash):
-            print('Hash proof is innacurate. New block denied.')
-            print(f'     {block.hash[:block.difficulty+4]}... does not start with {"0" * block.difficulty}')
-            return False
-
-        if not self.is_valid_difficulty(block):
-            print('Difficulty is incorrect. New block denied.')
+        if not difficulty.verify_block(block, self.last_block):
             return False
 
         self.chain.append(block)
 
-        # update difficulty every 50 blocks
-        if len(self.chain) % 50 == 0:
-            self.update_difficulty()
+        # update our difficulty
+        self.current_difficulty = difficulty.calc_chain_head_difficulty(self.chain)
 
+        # don't write every block. it is too often every 100 seems reasonable
         if len(self.chain) % 100 == 0:
-            self.write_chain() # don't write everyblock its too often every 100 seems reasonable
+            self.write_chain()
+        # TODO: File and memory manager to reduce in-memory chain length and maintain an up-to-date filesystem record
         return True
-
 
     def add_new_transaction(self, transaction):
         self.unconfirmed_transactions.append(transaction)

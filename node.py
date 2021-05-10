@@ -4,6 +4,7 @@ from urllib.parse import urlparse
 import os
 import requests
 
+import difficulty
 from PokeChain import Pokechain
 from block import Block
 
@@ -30,7 +31,7 @@ class PokeNode:
 
     @property
     def current_difficulty(self):
-        return self.blockchain.difficulty
+        return self.blockchain.current_difficulty
 
     def file_to_blocks(self, jchain={}):
         blocks = []
@@ -135,7 +136,7 @@ class PokeNode:
                       f'         to {blocks[-1].index}-{blocks[-1].hash}')
 
                 # Check if the length is longer and the chain is valid
-                if length > max_length and self.blockchain.validate_chain(blocks):
+                if length > max_length and difficulty.validate_chain(blocks):
                     max_length = length
                     new_chain = blocks
 
@@ -146,11 +147,6 @@ class PokeNode:
 
         return False
 
-
-
-class MinerNode(PokeNode):
-    def __init__(self):
-        super().__init__()
 
 if __name__ == '__main__':
     pass
