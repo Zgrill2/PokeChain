@@ -54,6 +54,7 @@ class PokeNode:
             return False
 
         # If block is > our current chain +1, resolve conflicts and skip addition
+        # This is the only time we will resolve conflicts
         if block.index > len(self.blockchain.chain):
             self.resolve_conflicts()
             return True
@@ -68,21 +69,8 @@ class PokeNode:
 
         else:
             print(f"New block {block.hash} was invalid: {block}")
-            #self.resolve_conflicts()
             return False
         return True
-
-    def broadcast_new_block(self, block, node):
-        d = {'block': json.loads(str(block).replace("'", '"'))}
-        headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
-        try:
-            response = requests.post(f'http://{node}/chain/add', json=d, headers=headers, timeout=5)
-        except Exception as e:
-            # note network failure, remove node after X timeouts
-            return False
-        if response.json()["validation"] == False:
-            self.resolve_conflicts()
-        print(f'FFFFFFFFF {response.json()["message"]}')
 
     def register_node(self, address):
         """
@@ -115,6 +103,15 @@ class PokeNode:
         except:
             pass
 
+    def broadcast_new_block(self, block, node):
+        d = {'block': json.loads(str(block).replace("'", '"'))}
+        headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
+        try:
+            response = requests.post(f'http://{node}/chain/add', json=d, headers=headers, timeout=5)
+        except Exception as e:
+            # note network failure, remove node after X timeouts
+            return True
+
     def resolve_conflicts(self):
         """
         This is our Consensus Algorithm, it resolves conflicts
@@ -122,14 +119,13 @@ class PokeNode:
         :return: <bool> True if our chain was replaced, False if not
         """
 
-        neighbours = self.nodes
         new_chain = None
 
         # We're only looking for chains longer than ours
         max_length = len(self.blockchain.chain)
 
         # Grab and verify the chains from all the nodes in our network
-        for node in neighbours:
+        for node in self.nodes:
             try:
                 response = requests.get(f'http://{node}/chain', timeout=5)
             except requests.exceptions.ConnectionError as e:

@@ -90,6 +90,7 @@ class PokeMiner:
         chain = response.json()
         jchain = '{ "chain" : '+ chain['chain'] + "}"
         jchain = json.loads(jchain.replace("'", '"'))
+        print('updating mining chain')
         self.node.blockchain.update_chain(self.node.file_to_blocks(jchain))
         return True, 'You are now at HEAD of server'
 
