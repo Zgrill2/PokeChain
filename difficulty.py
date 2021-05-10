@@ -22,7 +22,7 @@ def calc_chain_head_difficulty(chain):
             timestamps = []
             past_50 = chain[b.index-50:b.index+1] # get [0-50], [50-100] (inclusive)
             for index in range(len(past_50)-1):
-                timestamps.append(past_50[index+1] - past_50[index])
+                timestamps.append(past_50[index+1].timestamp - past_50[index].timestamp)
             average_diff = sum(timestamps) / len(timestamps)
             if average_diff > TARGET_TIME_PER_BLOCK:
                 difficulty -= 1
