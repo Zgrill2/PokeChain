@@ -30,6 +30,8 @@ class Pokechain:
         difficulty = self.chain[0].difficulty
         for i in range(0, len(self.chain), 50):
             chain = self.chain[0:i]
+            if len(chain) == 0:
+                chain.append(self.chain[0])
             difficulty = self.calculate_difficulty(chain, i, difficulty)
         self.difficulty = difficulty
 
@@ -67,6 +69,7 @@ class Pokechain:
         chain = self.chain
         index = block.index - (block.index % 50)
         cdifficulty = self.calculate_difficulty(chain, index-1, chain[block.index-1].difficulty)
+        print(f'Calculated a difficulty requirement of {cdifficulty}')
         t = block.hash[:cdifficulty]
         b = '0' * cdifficulty
         return t == b
@@ -149,12 +152,17 @@ class Pokechain:
         previous_hash = self.last_block.hash
 
         if previous_hash != block.previous_hash:
+            print('Previous hash compared failed. New block denied.')
+            print(f'    {previous_hash} does not match our chain\'s previous hash of {self.last_block.hash}')
             return False
 
         if not self.is_valid_proof(block, block.hash):
+            print('Hash proof is innacurate. New block denied.')
+            print(f'     {block.hash[:block.difficulty+4]}... does not start with {"0" * block.difficulty}')
             return False
 
         if not self.is_valid_difficulty(block):
+            print('Difficulty is incorrect. New block denied.')
             return False
 
         self.chain.append(block)
