@@ -60,7 +60,7 @@ class PokeNode:
 
         else:
             print(f"New block {block.hash} was invalid: {block}")
-            self.resolve_conflicts()
+            #self.resolve_conflicts()
             return False
         return True
 
@@ -85,9 +85,7 @@ class PokeNode:
         #print(f'{parsed_url.netloc}')
         self.nodes.add(parsed_url.path)
         self.resolve_conflicts()
-
-        if len(self.nodes) > inodes:
-            self.register_back(parsed_url)
+        self.register_back(parsed_url)
 
     def register_back(self, url):
         import socket
