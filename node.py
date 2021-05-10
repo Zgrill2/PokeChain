@@ -3,7 +3,7 @@ import socket
 from urllib.parse import urlparse
 import os
 import requests
-
+from multiprocessing.dummy import Pool
 import difficulty
 from PokeChain import Pokechain
 from block import Block
@@ -66,8 +66,20 @@ class PokeNode:
 
             import concurrent.futures
             import urllib.request
-            with  concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-                future_to_url = {executor.submit(self.broadcast_new_block, block, node): node for node in self.nodes}
+            print(f'{sender}')
+
+            pool = Pool(10)
+            futures = []
+
+
+            d = {'block': json.loads(str(block).replace("'", '"'))}
+            headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
+
+            for n in self.nodes:
+                futures.append(pool.apply_async(requests.post, [f'http://{n}/chain/add'], {'json': d, 'headers': headers, 'timeout': 20}))
+
+            #with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+            #    future_to_url = {executor.submit(self.broadcast_new_block, block, node): node for node in self.nodes if not node[:node.rindex(':')] == sender}
 
         else:
             print(f"New block {block.hash} was invalid: {block}")
@@ -104,7 +116,6 @@ class PokeNode:
             response = requests.post(f'http://{url.path}/nodes/register', json=d, headers=headers, timeout=20)
         except:
             pass
-
 
     def broadcast_new_block(self, block, node):
         d = {'block': json.loads(str(block).replace("'", '"'))}
