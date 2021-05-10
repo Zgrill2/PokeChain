@@ -76,6 +76,8 @@ class PokeNode:
             headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
 
             for n in self.nodes:
+                if n[:n.rindex(':')] == sender:
+                    continue
                 futures.append(pool.apply_async(requests.post, [f'http://{n}/chain/add'], {'json': d, 'headers': headers, 'timeout': 20}))
 
             #with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
