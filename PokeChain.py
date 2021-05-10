@@ -67,8 +67,9 @@ class Pokechain:
     def is_valid_difficulty(self, block):
         # validates the difficulty in a proposed new block
         chain = self.chain
-        index = block.index - (block.index % 50)
-        cdifficulty = self.calculate_difficulty(chain, index-1, chain[block.index-1].difficulty)
+        index = block.index - (block.index+1 % 50)
+        b = block.index
+        cdifficulty = self.calculate_difficulty(chain, index, chain[index].difficulty)
         print(f'Calculated a difficulty requirement of {cdifficulty}')
         t = block.hash[:cdifficulty]
         b = '0' * cdifficulty
