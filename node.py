@@ -10,7 +10,7 @@ from block import Block
 
 
 class PokeNode:
-    def __init__(self, app=None, blockchain_file='chain.json', register_initial_node='', port=80):
+    def __init__(self, app=None, blockchain_file='chain.json', register_initial_node='192.168.1.109:80', port=80):
         self.app = app
         self.blockfile = blockchain_file
         self.port = port
@@ -80,19 +80,27 @@ class PokeNode:
         :param address: <str> Address of node. Eg. 'http://192.168.0.5:5000'
         :return: None
         """
-
+        inodes =len(self.nodes)
         parsed_url = urlparse(address)
-        self.nodes.add(parsed_url.netloc)
+        #print(f'{parsed_url.netloc}')
+        self.nodes.add(parsed_url.path)
         self.resolve_conflicts()
-        self.register_back(parsed_url)
+
+        if len(self.nodes) > inodes:
+            self.register_back(parsed_url)
 
     def register_back(self, url):
-        hostname = socket.gethostname()
-        local_ip = socket.gethostbyname(hostname)
-        d = {'nodes': [f'http://{local_ip}:{self.port}']}
+        import socket
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ipaddr = s.getsockname()[0]
+
+        #hostname = socket.gethostname()
+        #local_ip = socket.gethostbyname(hostname)
+        d = {'nodes': [f'http://{ipaddr}:{self.port}']}
         try:
             headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
-            response = requests.post(f'{url}/nodes/register', json=d, headers=headers, timeout=5)
+            response = requests.post(f'http://{url.path}/nodes/register', json=d, headers=headers, timeout=20)
         except:
             pass
 
@@ -117,7 +125,7 @@ class PokeNode:
                 print(f'{e}')
                 continue
             except requests.exceptions.InvalidURL as e:
-                self.nodes.remove(node)
+                #self.nodes.remove(node)
                 continue
             except Exception as e:
                 print(f'Uncaught Error: {e}')
@@ -142,6 +150,7 @@ class PokeNode:
 
         # Replace our chain if we discovered a new, valid chain longer than ours
         if new_chain:
+            print(f'Accepted longer chain.')
             self.blockchain.update_chain(new_chain)
             return True
 
