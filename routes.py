@@ -21,6 +21,16 @@ def full_chain():
     return jsonify(response), 200
 
 
+@api_blueprint.route('/chain/last', methods=['GET'])
+def last_block():
+    print(f'User requested last block on the chain')
+    response = {
+        'block': str(pn.blockchain.last_block),
+        'hash': pn.blockchain.last_block.hash,
+    }
+    return jsonify(response), 200
+
+
 @api_blueprint.route('/nodes/register', methods=['POST'])
 def register_nodes():
     values = request.get_json()
@@ -44,10 +54,11 @@ def add_block():
     values = request.json
     block = values.get('block')
 
-    result = pn.add_block(block)
+    result = pn.recieve_block(block, request.remote_addr)
     response = {
-        'message': f'valid_block={result}',
+        'message': f'valid_block={result} sent from {request.remote_addr}',
         'new_block': block,
+        'validation': result
     }
     return jsonify(response), 201
 

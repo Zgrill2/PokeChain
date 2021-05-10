@@ -5,55 +5,20 @@ from block import Block
 from hashlib import sha256
 import json
 import time
-
+import difficulty
 from flask import Flask, request
 import requests
 
 
-def validate_chain(chain):
-    """
-    Determine if a given blockchain is valid
-    :param chain: <list> A blockchain
-    :return: <bool> True if valid, False if not
-    """
-    last_block = chain[0]
-    current_index = 1
-
-    while current_index < len(chain):
-        block = chain[current_index]
-
-        # Check that the hash of the block is correct
-        if block.previous_hash != last_block.hash:
-            return False
-
-        # Check that the Proof of Work is correct
-        if not is_valid_proof(block, block.hash):
-            return False
-
-        last_block = block
-        current_index += 1
-
-    return True
-
-
-def is_valid_proof(block, block_hash):
-    """
-    Difficulty is currently static.
-    When dynamic diff is implemented, diff @ block X will need to be calculated and will be part of verification
-    """
-    return (block_hash.startswith('0' * Pokechain.difficulty) and
-            block_hash == block.hash)
-
-
 class Pokechain:
-    # difficulty of our PoW algorithm
-    difficulty = 7
 
     def __init__(self, chain=[], blockfile_name='chain.json', genesis_phrase="Gotta Catch `em All"):
         self.unconfirmed_transactions = [] # currently unused
         self.chain = chain
         self.blockfile = blockfile_name
+        self.genesis_difficulty = 2
         self.genesis_phrase = genesis_phrase
+        self.current_difficulty = self.genesis_difficulty
         if len(self.chain) == 0:
             self.create_genesis_block()
 
@@ -63,7 +28,7 @@ class Pokechain:
         the chain. The block has index 0, previous_hash as 0, and
         a valid hash.
         """
-        genesis_block = Block(0, time.time(), self.genesis_phrase)
+        genesis_block = Block(0, time.time(), self.genesis_phrase, self.genesis_difficulty)
         self.chain.append(genesis_block)
         self.write_chain()
 
@@ -71,11 +36,12 @@ class Pokechain:
     def last_block(self):
         rchain = self.chain[-1]
         if isinstance(rchain, dict):
-            return Block(rchain["index"], rchain["timestamp"], rchain["previous_hash"], rchain["nonce"])
+            return Block(rchain["index"], rchain["timestamp"], rchain["previous_hash"], rchain["difficulty"], rchain["nonce"])
         return self.chain[-1]
 
     def update_chain(self, new_chain):
         self.chain = new_chain
+        self.current_difficulty = difficulty.calc_chain_head_difficulty(new_chain)
         self.write_chain()
 
     def write_chain(self):
@@ -87,24 +53,26 @@ class Pokechain:
     def add_block(self, block):
         """
         A function that adds the block to the chain after verification.
-        Verification includes:
-        * Checking if the proof is valid.
-        * The previous_hash referred in the block and the hash of latest block
-          in the chain match.
+        * Check if difficulty is valid
+        * Verify block is valid chain from current HEAD.
         """
-        previous_hash = self.last_block.hash
-
-        if previous_hash != block.previous_hash:
+        # Check that the stated difficulty is accurate
+        if not difficulty.is_valid_difficulty(block, self.chain):
             return False
 
-        if not is_valid_proof(block, block.hash):
+        if not difficulty.verify_block(block, self.last_block):
             return False
 
         self.chain.append(block)
-        if len(self.chain) % 100 == 0:
-            self.write_chain() # don't write everyblock its too often every 100 seems reasonable
-        return True
 
+        # update our difficulty
+        self.current_difficulty = difficulty.calc_chain_head_difficulty(self.chain)
+
+        # don't write every block. it is too often every 100 seems reasonable
+        if len(self.chain) % 100 == 0:
+            self.write_chain()
+        # TODO: File and memory manager to reduce in-memory chain length and maintain an up-to-date filesystem record
+        return True
 
     def add_new_transaction(self, transaction):
         self.unconfirmed_transactions.append(transaction)
