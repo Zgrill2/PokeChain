@@ -31,10 +31,7 @@ class Pokechain:
         for i in range(0, len(self.chain), 50):
             chain = self.chain[0:i]
             difficulty = self.calculate_difficulty(chain, i, difficulty)
-        diff = len(self.chain) % 50
-        index = len(self.chain) - diff
-        self.difficulty = self.calculate_difficulty(self.chain, index, self.difficulty)
-
+        self.difficulty = difficulty
 
     def update_difficulty(self):
         # get past 50 blocks
