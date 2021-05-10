@@ -10,12 +10,12 @@ Through this, participants could vote with their compute power for control of th
 Efficient mining will lead to random walk inputs. I have no idea how efficient random walk is at beating video games.
 
 
-Current Features:
+# Current Features
 Decentralized nodes
 Miner software that can mine randomly or for specific button inputs
 Execute keyboard inputs based on block hashes
 Dynamically scaling difficulty to target a specific average blocks per second
 
-Coming Next:
+# Coming Next
 External ip address discovery
 Improvements to node registration and sharing of known nodes
