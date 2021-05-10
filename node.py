@@ -83,7 +83,10 @@ class PokeNode:
         inodes =len(self.nodes)
         parsed_url = urlparse(address)
         #print(f'{parsed_url.netloc}')
-        self.nodes.add(parsed_url.path)
+        if not parsed_url.netloc == "":
+            self.nodes.add(parsed_url.netloc)
+        elif len(parsed_url.path) > 0:
+            self.nodes.add(parsed_url.path)
         self.resolve_conflicts()
         self.register_back(parsed_url)
 
