@@ -49,10 +49,15 @@ class PokeNode:
         if not isinstance(block, Block):
             block = self.create_block(block)
 
-        # If block is > our current chain +1 (for expected next block), resolve and peace out
+        # If the index is lower than our current index, skip validation
+        if block.index < self.blockchain.last_block.index:
+            return False
+
+        # If block is > our current chain +1, resolve conflicts and skip addition
         if block.index > len(self.blockchain.chain):
             self.resolve_conflicts()
             return True
+
         if self.blockchain.add_block(block):
 
             print(f'Block added: {block.index} - {block.hash}')
@@ -73,9 +78,11 @@ class PokeNode:
         try:
             response = requests.post(f'http://{node}/chain/add', json=d, headers=headers, timeout=5)
         except Exception as e:
-            # note failure, remove node after X failures
+            # note network failure, remove node after X timeouts
             return False
-        print(f'{response.json()["message"]}')
+        if response.json()["validation"] == False:
+            self.resolve_conflicts()
+        print(f'FFFFFFFFF {response.json()["message"]}')
 
     def register_node(self, address):
         """
