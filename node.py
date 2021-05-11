@@ -19,9 +19,12 @@ class PokeNode:
         else:
             with open(self.blockfile) as f:
                 data = f.read()
-                data = data.replace("'", '"')
-                data = json.loads(data)
-                self.blockchain = Pokechain(self.file_to_blocks(data))
+                if len(data) > 0:
+                    data = data.replace("'", '"')
+                    data = json.loads(data)
+                    self.blockchain = Pokechain(self.file_to_blocks(data))
+                else:
+                    self.blockchain = Pokechain()
         self.nodes = set()
         if not register_initial_node == '':
             self.register_node(register_initial_node)
