@@ -21,6 +21,24 @@ def full_chain():
     return jsonify(response), 200
 
 
+
+@api_blueprint.route('/chain/<int:index>', methods=['GET'])
+def partial_chain(index):
+    print(f'User requested {index} to HEAD')
+    response = {
+        'chain': [],
+        'length': 0,
+    }
+    if index < 0 or index > pn.blockchain.last_block.index:
+        return jsonify(response), 404
+
+    response = {
+        'chain': str(pn.blockchain.chain[index:]),
+        'length': len(pn.blockchain.chain[index:]),
+    }
+    return jsonify(response), 200
+
+
 @api_blueprint.route('/chain/last', methods=['GET'])
 def last_block():
     print(f'User requested last block on the chain')

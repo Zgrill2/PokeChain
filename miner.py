@@ -81,6 +81,30 @@ class PokeMiner:
                 print(f'Attempted {block.nonce} tries to mine block {len(self.node.blockchain.chain)}')
         return True
 
+    def add_to_mining_chain(self):
+        try:
+            response = requests.get(f'{self.master_node}/chain/{self.node.blockchain.last_block.index}', timeout=5)
+        except Exception as e:
+            print(f'{e}')
+            return False, 'Your server seems to be offline'
+        chain = response.json()
+        jchain = '{ "chain" : '+ chain['chain'] + "}"
+        jchain = json.loads(jchain.replace("'", '"'))
+        b = self.node.file_to_blocks(jchain)
+        if len(b) == 0:
+            self.update_mining_chain()
+            return True, 'We were too far ahead.'
+        if len(b) == 1:
+            if self.node.blockchain.last_block.previous_hash == b.previous_hash:
+                return True, 'No update needed'
+        for block in b:
+            if block.index == self.node.blockchain.last_block.index:
+                continue
+            self.node.blockchain.chain.append(block)
+        #print('updating mining chain')
+        self.node.blockchain.update_chain(self.node.blockchain.chain)
+        return True, 'You are now at HEAD of server'
+
     def update_mining_chain(self):
         try:
             response = requests.get(f'{self.master_node}/chain', timeout=5)
@@ -90,7 +114,7 @@ class PokeMiner:
         chain = response.json()
         jchain = '{ "chain" : '+ chain['chain'] + "}"
         jchain = json.loads(jchain.replace("'", '"'))
-        print('updating mining chain')
+        #print('updating mining chain')
         self.node.blockchain.update_chain(self.node.file_to_blocks(jchain))
         return True, 'You are now at HEAD of server'
 
@@ -102,8 +126,8 @@ class PokeMiner:
             response = requests.post(f'{self.master_node}/chain/add', json=d, headers=headers, timeout=5)
         except Exception as e:
             return False, 'Your server seems to be offline'
-        print(f'{response.json()["message"]} for block {response.json()["new_block"]}')
-        self.update_mining_chain()
+        #print(f'{response.json()["message"]} for block {response.json()["new_block"]}')
+        self.add_to_mining_chain()
 
     def set_master_node(self, hostname):
         self.master_node = hostname
