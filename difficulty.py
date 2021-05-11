@@ -28,6 +28,9 @@ def calc_chain_head_difficulty(chain):
                 difficulty -= 1
             elif average_diff < TARGET_TIME_PER_BLOCK:
                 difficulty += 1
+        if b.index > 95000:
+            if difficulty < 0:
+                difficulty = 0
     return difficulty
 
 

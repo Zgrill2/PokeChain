@@ -127,6 +127,8 @@ class PokeMiner:
         except Exception as e:
             return False, 'Your server seems to be offline'
         #print(f'{response.json()["message"]} for block {response.json()["new_block"]}')
+        if response.json()["validation"] == True:
+            print(f'You succesfully mined a block: {response.json()["new_block"]}')
         self.add_to_mining_chain()
 
     def set_master_node(self, hostname):
@@ -137,5 +139,5 @@ class PokeMiner:
 
 if __name__ == '__main__':
     m = PokeMiner()
-    m.set_master_node('http://192.168.1.153:80')
+    m.set_master_node('http://192.168.1.117:5000')
     m.mine_block()
