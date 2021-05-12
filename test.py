@@ -36,8 +36,9 @@ def create_block(bdict):
 
 
 def get_current_chain():
+    global current_block
     try:
-        response = requests.get(f'http://192.168.1.117:5000/chain', timeout=5)
+        response = requests.get(f'http://192.168.1.117:5000/chain/{current_block}', timeout=5)
     except requests.exceptions.ConnectionError as e:
         print(f'{e}')
         return False
@@ -52,6 +53,8 @@ def play():
     while True:
         chain = get_current_chain()
         #current_block = 0
+        if isinstance(chain, bool):
+            continue
         len_chain = len(chain)
 
         while len_chain > current_block:
@@ -59,7 +62,7 @@ def play():
             character = create_block(chain[current_block]).hash[-1]
             result = ord(character) % len(k)
 
-            print(f'{[result]} pressed')
+            print(f'{k[result]} pressed')
             press_key(keys[k[result]], 1)
             current_block += 1
             time.sleep(0.25)
