@@ -57,15 +57,17 @@ def play():
             continue
         len_chain = len(chain)
         head = len_chain + current_block
-        while head > current_block:
+        i = 0
+        while head > i:
             # press key: press_key(keys['left'], 10)
-            character = create_block(chain[current_block]).hash[-1]
+            character = create_block(chain[i]).hash[-1]
             result = ord(character) % len(k)
 
             print(f'{k[result]} pressed')
             press_key(keys[k[result]], 1)
-            current_block += 1
+            i += 1
             time.sleep(0.25)
+        current_block = head
 
 
 if __name__ == '__main__':
