@@ -9,8 +9,8 @@
         Calculate what the difficulty of any given block in a chain should be
 """
 
-TARGET_TIME_PER_BLOCK = 2
-
+TARGET_TIME_PER_BLOCK = .51
+TARGET_TIME_PER_BLOCK_11800 = 2
 
 # Main Diff Algorithm Implementation Here
 def calc_chain_head_difficulty(chain):
@@ -24,10 +24,15 @@ def calc_chain_head_difficulty(chain):
             for index in range(len(past_50)-1):
                 timestamps.append(past_50[index+1].timestamp - past_50[index].timestamp)
             average_diff = sum(timestamps) / len(timestamps)
-            if average_diff > TARGET_TIME_PER_BLOCK:
+
+            tt = TARGET_TIME_PER_BLOCK
+            if b.index > 11800:
+                tt = TARGET_TIME_PER_BLOCK_11800
+            if average_diff > tt:
                 difficulty -= 1
-            elif average_diff < TARGET_TIME_PER_BLOCK:
+            elif average_diff < tt:
                 difficulty += 1
+
         if b.index > 95000:
             if difficulty < 0:
                 difficulty = 0
