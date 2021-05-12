@@ -9,7 +9,7 @@
         Calculate what the difficulty of any given block in a chain should be
 """
 
-TARGET_TIME_PER_BLOCK = .51
+TARGET_TIME_PER_BLOCK = 2
 
 
 # Main Diff Algorithm Implementation Here
