@@ -10,7 +10,7 @@
 """
 
 TARGET_TIME_PER_BLOCK = .51
-TARGET_TIME_PER_BLOCK_118000 = 2
+TARGET_TIME_PER_BLOCK_117500 = 2
 
 # Main Diff Algorithm Implementation Here
 def calc_chain_head_difficulty(chain):
@@ -26,8 +26,8 @@ def calc_chain_head_difficulty(chain):
             average_diff = sum(timestamps) / len(timestamps)
 
             tt = TARGET_TIME_PER_BLOCK
-            if b.index > 11800:
-                tt = TARGET_TIME_PER_BLOCK_118000
+            if b.index > 117500:
+                tt = TARGET_TIME_PER_BLOCK_117500
             if average_diff > tt:
                 difficulty -= 1
             elif average_diff < tt:
