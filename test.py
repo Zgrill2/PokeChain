@@ -43,8 +43,11 @@ def get_current_chain():
         print(f'{e}')
         return False
     length = response.json()['length']
-    chain = json.loads(response.json()['chain'].replace("'", '"'))
-    return chain
+    if length > 0:
+        chain = json.loads(response.json()['chain'].replace("'", '"'))
+        return chain
+    else:
+        return False
 
 
 def play():
