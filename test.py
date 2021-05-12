@@ -25,7 +25,7 @@ keys = {
 
 k = [kk for kk in keys.keys()]
 
-current_block = 1
+current_block = 122000
 blockchain = []
 
 from block import Block
@@ -56,8 +56,8 @@ def play():
         if isinstance(chain, bool):
             continue
         len_chain = len(chain)
-
-        while len_chain > current_block:
+        head = len_chain + current_block
+        while head > current_block:
             # press key: press_key(keys['left'], 10)
             character = create_block(chain[current_block]).hash[-1]
             result = ord(character) % len(k)
