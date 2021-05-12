@@ -58,7 +58,7 @@ def play():
         len_chain = len(chain)
         head = len_chain + current_block
         i = 0
-        while head > i:
+        while head > i and i < len(chain):
             # press key: press_key(keys['left'], 10)
             character = create_block(chain[i]).hash[-1]
             result = ord(character) % len(k)
